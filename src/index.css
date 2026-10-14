@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  --color-gol-navy: #354779;
+  --color-gol-navy-deep: #25365f;
+  --color-gol-orange: #f58d43;
+  --color-gol-orange-dark: #e27a2f;
+  --color-gol-ink: #303030;
+  --color-gol-muted: #5f6577;
+  --color-gol-line: #e3e6ee;
+  --color-gol-line-strong: #c5cbdc;
+  --color-gol-mist: #f5f7fb;
+  --color-gol-selected: #f0f3fa;
+  --color-gol-error: #c43a3a;
+
+  --animate-step-forward: step-forward 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-step-back: step-back 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+
+  @keyframes step-forward {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes step-back {
+    from { opacity: 0; transform: translateX(-24px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-white font-sans text-gol-ink antialiased;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
