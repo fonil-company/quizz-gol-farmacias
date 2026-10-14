@@ -1,4 +1,4 @@
-// Ponte para a API de Conversões da Meta. O token de acesso fica somente aqui, no servidor.
+// Ponte para a API de Conversões da Meta e para o webhook do CRM. Tokens ficam somente aqui, no servidor.
 // O Caddy encaminha /api/* para este processo (ver Caddyfile). Sem dependências: Node 22+.
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
@@ -8,6 +8,7 @@ const PIXEL_ID = (process.env.META_PIXEL_ID || process.env.VITE_META_PIXEL_ID ||
 const ACCESS_TOKEN = (process.env.META_ACCESS_TOKEN || '').trim();
 const TEST_EVENT_CODE = (process.env.META_TEST_EVENT_CODE || '').trim();
 const API_VERSION = process.env.META_API_VERSION || 'v23.0';
+const LEAD_WEBHOOK_URL = (process.env.LEAD_WEBHOOK_URL || '').trim();
 
 const ALLOWED_EVENTS = new Set(['PageView', 'QuizStart', 'Lead']);
 const MAX_BODY_BYTES = 16 * 1024;
@@ -80,13 +81,43 @@ function readJson(req) {
   });
 }
 
+/** Repassa o lead ao webhook do CRM e devolve o status recebido, para o navegador decidir se tenta de novo. */
+async function forwardLead(lead) {
+  const response = await fetch(LEAD_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(lead),
+    signal: AbortSignal.timeout(7000),
+  });
+  if (!response.ok) console.error('[LEAD] webhook respondeu HTTP', response.status, await response.text());
+  return response.status;
+}
+
 const reply = (res, status, data) => {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
 };
 
 createServer(async (req, res) => {
-  if (req.method === 'GET' && req.url === '/api/health') return reply(res, 200, { ok: true, configured: !!(PIXEL_ID && ACCESS_TOKEN) });
+  if (req.method === 'GET' && req.url === '/api/health') {
+    return reply(res, 200, { ok: true, configured: !!(PIXEL_ID && ACCESS_TOKEN), webhook: !!LEAD_WEBHOOK_URL });
+  }
+  if (req.method === 'POST' && req.url === '/api/lead') {
+    if (!LEAD_WEBHOOK_URL) return reply(res, 503, { error: 'LEAD_WEBHOOK_URL ausente' });
+    let lead;
+    try {
+      lead = await readJson(req);
+    } catch {
+      return reply(res, 400, { error: 'json inválido' });
+    }
+    try {
+      const status = await forwardLead(lead);
+      return reply(res, status >= 200 && status < 300 ? 200 : 502, { webhook_status: status });
+    } catch (error) {
+      console.error('[LEAD]', error.message);
+      return reply(res, 504, { error: 'webhook indisponível' });
+    }
+  }
   if (req.method !== 'POST' || req.url !== '/api/meta-event') return reply(res, 404, { error: 'not found' });
 
   let body;
@@ -108,4 +139,5 @@ createServer(async (req, res) => {
 }).listen(PORT, '127.0.0.1', () => {
   const status = PIXEL_ID && ACCESS_TOKEN ? `pixel ${PIXEL_ID}` : 'NÃO CONFIGURADO (defina META_PIXEL_ID e META_ACCESS_TOKEN)';
   console.log(`[CAPI] ouvindo em 127.0.0.1:${PORT} · ${status}${TEST_EVENT_CODE ? ` · teste ${TEST_EVENT_CODE}` : ''}`);
+  console.log(`[LEAD] webhook ${LEAD_WEBHOOK_URL ? 'configurado' : 'NÃO CONFIGURADO (defina LEAD_WEBHOOK_URL)'}`);
 });

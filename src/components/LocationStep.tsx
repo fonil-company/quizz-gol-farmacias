@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { cloneElement, useState, type FormEvent, type ReactElement } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { UFS } from '../data/quiz';
+import { CIDADES, UFS, type Uf } from '../data/cidades';
 import { cn } from '../lib/cn';
 import type { Location } from '../types';
 import { BackButton, Field, PrimaryButton, StepActions, StepHeader, inputClass } from './ui';
@@ -14,10 +14,13 @@ interface LocationStepProps {
   onBack: () => void;
 }
 
+const citiesOf = (estado: string): readonly string[] => CIDADES[estado as Uf] ?? [];
+
 function validate(value: Location) {
+  const cities = citiesOf(value.estado);
   return {
-    cidade: value.cidade.trim().length < 2 ? 'Informe a cidade da farmácia.' : '',
-    estado: !value.estado ? 'Selecione o estado.' : '',
+    estado: !cities.length ? 'Selecione o estado.' : '',
+    cidade: !cities.includes(value.cidade) ? 'Selecione a cidade da farmácia.' : '',
   };
 }
 
@@ -25,12 +28,13 @@ export function LocationStep({ number, total, value, onChange, onNext, onBack }:
   const [submitted, setSubmitted] = useState(false);
   const errors = validate(value);
   const show = (field: keyof Location) => (submitted ? errors[field] : '');
+  const cities = citiesOf(value.estado);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (errors.cidade) return document.getElementById('cidade')?.focus();
     if (errors.estado) return document.getElementById('estado')?.focus();
+    if (errors.cidade) return document.getElementById('cidade')?.focus();
     onNext();
   }
 
@@ -38,33 +42,21 @@ export function LocationStep({ number, total, value, onChange, onNext, onBack }:
     <form onSubmit={handleSubmit} noValidate>
       <StepHeader
         eyebrow={`Pergunta ${number} de ${total}`}
-        title="Em qual cidade e estado sua farmácia está localizada?"
+        title="Em qual estado e cidade sua farmácia está localizada?"
+        description="Atendemos farmácias e drogarias do Maranhão e do Piauí."
       />
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
-        <Field id="cidade" label="Cidade" error={show('cidade')}>
-          <input
-            id="cidade"
-            type="text"
-            autoComplete="address-level2"
-            placeholder="Nome da cidade"
-            value={value.cidade}
-            onChange={(e) => onChange({ ...value, cidade: e.target.value })}
-            aria-invalid={!!show('cidade')}
-            aria-describedby={show('cidade') ? 'cidade-error' : undefined}
-            className={inputClass(!!show('cidade'))}
-          />
-        </Field>
+      <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
         <Field id="estado" label="Estado" error={show('estado')}>
-          <div className="relative">
+          <SelectBox invalid={!!show('estado')} empty={!value.estado}>
             <select
               id="estado"
               autoComplete="address-level1"
               value={value.estado}
-              onChange={(e) => onChange({ ...value, estado: e.target.value })}
+              // Trocar o estado limpa a cidade, que pertence à lista do estado anterior
+              onChange={(e) => onChange({ estado: e.target.value, cidade: '' })}
               aria-invalid={!!show('estado')}
               aria-describedby={show('estado') ? 'estado-error' : undefined}
-              className={cn(inputClass(!!show('estado')), 'appearance-none pr-11', !value.estado && 'text-[#9aa0ae]')}
             >
               <option value="">Selecione</option>
               {UFS.map((uf) => (
@@ -73,14 +65,27 @@ export function LocationStep({ number, total, value, onChange, onNext, onBack }:
                 </option>
               ))}
             </select>
-            <svg
-              aria-hidden
-              viewBox="0 0 12 8"
-              className="pointer-events-none absolute top-1/2 right-4 h-2 w-3 -translate-y-1/2 text-gol-navy"
+          </SelectBox>
+        </Field>
+        <Field id="cidade" label="Cidade" error={show('cidade')}>
+          <SelectBox invalid={!!show('cidade')} empty={!value.cidade}>
+            <select
+              id="cidade"
+              autoComplete="address-level2"
+              value={cities.includes(value.cidade) ? value.cidade : ''}
+              onChange={(e) => onChange({ ...value, cidade: e.target.value })}
+              disabled={!cities.length}
+              aria-invalid={!!show('cidade')}
+              aria-describedby={show('cidade') ? 'cidade-error' : undefined}
             >
-              <path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </div>
+              <option value="">{cities.length ? 'Selecione a cidade' : 'Selecione o estado primeiro'}</option>
+              {cities.map((cidade) => (
+                <option key={cidade} value={cidade} className="text-gol-ink">
+                  {cidade}
+                </option>
+              ))}
+            </select>
+          </SelectBox>
         </Field>
       </div>
 
@@ -92,5 +97,23 @@ export function LocationStep({ number, total, value, onChange, onNext, onBack }:
         </PrimaryButton>
       </StepActions>
     </form>
+  );
+}
+
+/** Select nativo com a seta da marca (a lista nativa é a mais prática no celular). */
+function SelectBox({ invalid, empty, children }: { invalid: boolean; empty: boolean; children: ReactElement<{ className?: string }> }) {
+  return (
+    <div className="relative">
+      {cloneElement(children, {
+        className: cn(inputClass(invalid), 'appearance-none pr-11 disabled:cursor-not-allowed disabled:opacity-60', empty && 'text-[#9aa0ae]'),
+      })}
+      <svg
+        aria-hidden
+        viewBox="0 0 12 8"
+        className="pointer-events-none absolute top-1/2 right-4 h-2 w-3 -translate-y-1/2 text-gol-navy"
+      >
+        <path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </div>
   );
 }

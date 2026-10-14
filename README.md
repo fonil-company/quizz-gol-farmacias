@@ -59,6 +59,7 @@ Variáveis só do servidor, cadastradas em Environment no EasyPanel e nunca no r
 | Variável | Uso |
 | --- | --- |
 | `META_ACCESS_TOKEN` | Token da API de Conversões (obrigatório) |
+| `LEAD_WEBHOOK_URL` | URL do webhook do CRM, com token. O navegador envia para `/api/lead` e o servidor repassa |
 | `META_TEST_EVENT_CODE` | Opcional: código de "Testar eventos". Remova depois de validar |
 
 Localmente, rode `npm run capi` (lê o `.env`) junto com `npm run dev`; o Vite encaminha `/api` para a porta 3001. Use `GET /api/health` para conferir se o servidor está configurado.
@@ -66,5 +67,6 @@ Localmente, rode `npm run capi` (lê o `.env`) junto com `npm run dev`; o Vite e
 ## Onde editar
 
 - Perguntas e alternativas: `src/data/quiz.ts`
+- Estados e cidades atendidos: `src/data/cidades.ts`
 - Regra de classificação do lead: `src/lib/qualify.ts`
 - Mensagem do WhatsApp e envio ao webhook: `src/lib/lead.ts`
