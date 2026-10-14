@@ -1,0 +1,14 @@
+[variables]
+NIXPACKS_NODE_VERSION = "22"
+NIXPACKS_SPA_OUT_DIR = "dist"
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm ci --include=dev --include=optional"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+# Nixpacks serves the Vite build with its automatically configured Caddy server.

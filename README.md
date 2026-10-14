@@ -6,8 +6,10 @@ React + TypeScript + Tailwind CSS (Vite).
 
 ## Rodar localmente
 
+Use Node.js 22 e npm 10 ou superior.
+
 ```bash
-npm install
+npm ci --include=dev --include=optional
 npm run dev
 ```
 
@@ -18,6 +20,14 @@ npm run build   # gera a pasta dist/
 ```
 
 Na Vercel ou Netlify: comando de build `npm run build`, pasta de saída `dist`.
+
+## Deploy no EasyPanel
+
+Selecione Nixpacks como método de build, com a raiz do repositório como diretório de build. O arquivo `nixpacks.toml` fixa o Node.js 22 e os comandos de instalação e build. O Nixpacks serve a pasta `dist` pelo Caddy configurado automaticamente; deixe o comando de início sem sobrescrita no painel.
+
+Se houver `NIXPACKS_NODE_VERSION` nas variáveis do EasyPanel, use `22`. As dependências opcionais precisam ser instaladas, pois incluem os módulos nativos do Tailwind, Lightning CSS e Rollup para Linux.
+
+Após atualizar o repositório conectado, execute um novo deploy. O plano de build deve indicar `nodejs_22` e a instalação deve executar `npm ci --include=dev --include=optional`.
 
 ## Configuração
 
