@@ -17,4 +17,4 @@ dependsOn = ["install", "caddy"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "exec caddy run --config /app/Caddyfile --adapter caddyfile"
+cmd = "node --env-file-if-exists=/app/.env.production /app/server/capi.mjs & exec caddy run --config /app/Caddyfile --adapter caddyfile"

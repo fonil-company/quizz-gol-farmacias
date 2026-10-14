@@ -5,8 +5,15 @@
 }
 
 :{$PORT:3000} {
-	root * /app/dist
-	encode gzip
-	try_files {path} /index.html
-	file_server
+	# API de Conversões da Meta (server/capi.mjs)
+	handle /api/* {
+		reverse_proxy 127.0.0.1:{$CAPI_PORT:3001}
+	}
+
+	handle {
+		root * /app/dist
+		encode gzip
+		try_files {path} /index.html
+		file_server
+	}
 }

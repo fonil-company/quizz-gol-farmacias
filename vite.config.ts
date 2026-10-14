@@ -6,6 +6,7 @@ export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
   server: {
+    proxy: { '/api': 'http://127.0.0.1:3001' },
     watch: { ignored: ['**/.claude/**', '**/versao-html-anterior/**', '**/versao-geral-6-perguntas/**'] },
   },
 });

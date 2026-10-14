@@ -100,11 +100,21 @@ export default function App() {
     setFailed(false);
     try {
       const outcome = await sendLead(payload);
-      track('Lead', {
-        comercializa_chinelos: payload.comercializa_chinelos,
-        faixa_investimento: payload.faixa_investimento,
-        classificacao_lead: payload.classificacao_lead,
-      });
+      track(
+        'Lead',
+        {
+          comercializa_chinelos: payload.comercializa_chinelos,
+          faixa_investimento: payload.faixa_investimento,
+          classificacao_lead: payload.classificacao_lead,
+        },
+        {
+          nome_completo: payload.nome_completo,
+          whatsapp: payload.whatsapp,
+          cnpj: payload.cnpj,
+          cidade: payload.cidade,
+          estado: payload.estado,
+        },
+      );
       finish(outcome, payload);
     } catch (error) {
       console.error('[GOL Quiz] Falha ao enviar lead ao webhook:', error);
