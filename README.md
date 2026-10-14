@@ -23,7 +23,9 @@ Na Vercel ou Netlify: comando de build `npm run build`, pasta de saída `dist`.
 
 ## Deploy no EasyPanel
 
-Selecione Nixpacks como método de build, com a raiz do repositório como diretório de build. O arquivo `nixpacks.toml` fixa o Node.js 22 e os comandos de instalação e build. O Nixpacks serve a pasta `dist` pelo Caddy configurado automaticamente; deixe o comando de início sem sobrescrita no painel.
+Selecione Nixpacks como método de build, com a raiz do repositório como diretório de build. O arquivo `nixpacks.toml` fixa o Node.js 22, os comandos de instalação e build e a inicialização do Caddy. Deixe o comando de início sem sobrescrita no painel para usar `exec caddy run --config /app/Caddyfile --adapter caddyfile`.
+
+O `Caddyfile` serve exclusivamente `/app/dist`, na porta definida por `PORT` (padrão: `3000`). O domínio no EasyPanel deve encaminhar para essa porta. A página publicada deve carregar arquivos `.js` de `/assets/`; uma tentativa de carregar `/src/main.tsx` indica que o servidor está apontando para a raiz do projeto.
 
 Se houver `NIXPACKS_NODE_VERSION` nas variáveis do EasyPanel, use `22`. As dependências opcionais precisam ser instaladas, pois incluem os módulos nativos do Tailwind, Lightning CSS e Rollup para Linux.
 
